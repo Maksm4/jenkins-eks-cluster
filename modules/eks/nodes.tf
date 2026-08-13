@@ -1,0 +1,48 @@
+resource "aws_eks_node_group" "agents" {
+    cluster_name = aws_eks_cluster.eks.name
+    node_group_name = "jenkins-agents"
+    node_role_arn = aws_iam_role.node.arn
+    version = var.eks_version
+
+    subnet_ids = var.private_subnet_ids
+
+    scaling_config {
+      desired_size = 1
+      min_size = 0
+      max_size = 5
+    }
+
+    update_config {
+      max_unavailable = 1
+    }
+
+    taint { 
+        key    = "dedicated"
+        value  = "jenkins"
+        effect = "NO_SCHEDULE"
+     }
+
+    taint {
+      key = "jenkinsType"
+      value = "agent"
+      effect = "NO_SCHEDULE"
+    }
+
+    labels = {
+      dedicated   = "jenkins"
+      jenkinsType = "agent"
+    }
+
+    capacity_type = "SPOT"
+    instance_types = ["t3.medium"]
+
+    depends_on = [ 
+        aws_iam_role_policy_attachment.ec2_container_registry_read_policy,
+        aws_iam_role_policy_attachment.eks_cni_policy,
+        aws_iam_role_policy_attachment.eks_worker_node_policy
+     ]
+
+     lifecycle {
+       ignore_changes = [ scaling_config[0].desired_size ]
+     }
+}
