@@ -8,8 +8,8 @@ resource "aws_eks_node_group" "agents" {
 
     scaling_config {
       desired_size = 1
-      min_size = 0
-      max_size = 5
+      min_size = 1
+      max_size = 3
     }
 
     update_config {
@@ -45,4 +45,45 @@ resource "aws_eks_node_group" "agents" {
      lifecycle {
        ignore_changes = [ scaling_config[0].desired_size ]
      }
+}
+
+resource "aws_eks_node_group" "controller" {
+    cluster_name = aws_eks_cluster.eks.name
+    node_group_name = "jenkins-controller"
+    node_role_arn = aws_iam_role.node.arn
+    version = var.eks_version
+
+    subnet_ids = var.private_subnet_ids
+
+    scaling_config {
+      desired_size = 1
+      min_size = 1
+      max_size = 1
+    }
+
+    taint { 
+        key    = "dedicated"
+        value  = "jenkins"
+        effect = "NO_SCHEDULE"
+     }
+
+    taint {
+      key = "jenkinsType"
+      value = "controller"
+      effect = "NO_SCHEDULE"
+    }
+
+    labels = {
+      dedicated   = "jenkins"
+      jenkinsType = "controller"
+    }
+
+    capacity_type = "ON_DEMAND"
+    instance_types = ["t3.large"]
+
+    depends_on = [ 
+        aws_iam_role_policy_attachment.ec2_container_registry_read_policy,
+        aws_iam_role_policy_attachment.eks_cni_policy,
+        aws_iam_role_policy_attachment.eks_worker_node_policy
+     ]
 }
