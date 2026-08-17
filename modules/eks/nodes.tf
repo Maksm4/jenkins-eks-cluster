@@ -87,3 +87,27 @@ resource "aws_eks_node_group" "controller" {
         aws_iam_role_policy_attachment.eks_worker_node_policy
      ]
 }
+
+resource "aws_eks_node_group" "system" {
+  cluster_name = aws_eks_cluster.eks.name
+  subnet_ids = var.private_subnet_ids
+  node_role_arn = aws_iam_role.node.arn
+  version = var.eks_version
+  node_group_name = "system"
+
+  scaling_config {
+    desired_size = 1
+    min_size = 1
+    max_size = 3
+  }
+
+  instance_types = ["t3.medium", "t3.large"]
+  capacity_type = "ON_DEMAND"
+  
+  depends_on = [
+    aws_iam_role_policy_attachment.ec2_container_registry_read_policy,
+        aws_iam_role_policy_attachment.eks_cni_policy,
+        aws_iam_role_policy_attachment.eks_worker_node_policy
+    ]
+
+}
