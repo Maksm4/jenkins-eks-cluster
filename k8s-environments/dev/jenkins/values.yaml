@@ -1,0 +1,55 @@
+controller:
+  nodeSelector:
+    jenkinsType: controller
+    dedicated: jenkins
+    eks.amazonaws.com/capacityType: ON_DEMAND
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: jenkins
+      effect: NoSchedule
+    - key: jenkinsType
+      operator: Equal
+      value: controller
+      effect: NoSchedule
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  installPlugins:
+    - kubernetes
+    - workflow-aggregator
+    - git
+    - aws-credentials
+    - configuration-as-code
+  JCasC:
+    defaultConfig: true
+    configScripts:
+      welcome-message: |
+        jenkins:
+          systemMessage: "Welcome to the EKS Jenkins Cluster!"
+  
+agent:
+  nodeSelector:
+    jenkinsType: agent
+    dedicated: jenkins
+    eks.amazonaws.com/capacityType: SPOT 
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: jenkins
+      effect: NoSchedule
+    - key: jenkinsType
+      operator: Equal
+      value: agent
+      effect: NoSchedule
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1024Mi"

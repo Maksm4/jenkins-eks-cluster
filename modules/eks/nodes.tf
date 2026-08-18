@@ -33,6 +33,11 @@ resource "aws_eks_node_group" "agents" {
       jenkinsType = "agent"
     }
 
+    tags = {
+      "k8s.io/cluster-autoscaler/enabled"                  = "true"
+      "k8s.io/cluster-autoscaler/${aws_eks_cluster.eks.name}" = "owned"
+    }
+
     capacity_type = "SPOT"
     instance_types = ["t3.medium"]
 
@@ -78,6 +83,11 @@ resource "aws_eks_node_group" "controller" {
       jenkinsType = "controller"
     }
 
+    tags = {
+      "k8s.io/cluster-autoscaler/enabled"                  = "true"
+      "k8s.io/cluster-autoscaler/${aws_eks_cluster.eks.name}" = "owned"
+    }
+
     capacity_type = "ON_DEMAND"
     instance_types = ["t3.large"]
 
@@ -100,6 +110,11 @@ resource "aws_eks_node_group" "system" {
     min_size = 1
     max_size = 3
   }
+
+  tags = {
+      "k8s.io/cluster-autoscaler/enabled"                  = "true"
+      "k8s.io/cluster-autoscaler/${aws_eks_cluster.eks.name}" = "owned"
+    }
 
   instance_types = ["t3.medium", "t3.large"]
   capacity_type = "ON_DEMAND"
