@@ -28,15 +28,17 @@ controller:
   JCasC:
     defaultConfig: true
     configScripts:
-      welcome-message: |
+      welcome-message: |-
         jenkins:
           systemMessage: "Welcome to the EKS Jenkins Cluster!"
-  
+
 agent:
+  customJenkinsLabels:
+    - "my-gp3-agent"
   nodeSelector:
     jenkinsType: agent
     dedicated: jenkins
-    eks.amazonaws.com/capacityType: SPOT 
+    eks.amazonaws.com/capacityType: SPOT
   tolerations:
     - key: dedicated
       operator: Equal
@@ -53,3 +55,30 @@ agent:
     limits:
       cpu: "1000m"
       memory: "1024Mi"
+  workspaceVolume:
+    type: GenericEphemeralVolume
+    storageClassName: gp3
+    accessModes: ReadWriteOnce
+    requestsSize: 15Gi
+  yamlTemplate: |-
+    apiVersion: v1
+    kind: Pod
+    spec:
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: jenkins
+          effect: NoSchedule
+        - key: jenkinsType
+          operator: Equal
+          value: agent
+          effect: NoSchedule
+      initContainers:
+        - name: ebs-permission-fix
+          image: busybox
+          command: ["sh", "-c", "chown -R 1000:1000 /home/jenkins/agent"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: workspace-volume
+              mountPath: /home/jenkins/agent
